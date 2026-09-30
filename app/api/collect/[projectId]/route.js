@@ -12,7 +12,7 @@ export async function OPTIONS() {
 }
 
 export async function POST(req, { params }) {
-  const { projectId } = params;
+  const { projectId } = await params;
   const contentType = req.headers.get("content-type") || "";
 
   let email;
@@ -25,7 +25,10 @@ export async function POST(req, { params }) {
 
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   if (!email || !emailRegex.test(email)) {
-    return NextResponse.json({ error: "invalid email" }, { status: 400, headers: corsHeaders });
+    return NextResponse.json(
+      { error: "invalid email" },
+      { status: 400, headers: corsHeaders },
+    );
   }
 
   const client = await clientPromise;
@@ -33,15 +36,26 @@ export async function POST(req, { params }) {
 
   const project = await db.collection("projects").findOne({ projectId });
   if (!project) {
-    return NextResponse.json({ error: "project not found" }, { status: 404, headers: corsHeaders });
+    return NextResponse.json(
+      { error: "project not found" },
+      { status: 404, headers: corsHeaders },
+    );
   }
 
   const existing = await db.collection("emails").findOne({ projectId, email });
   if (existing) {
-    return NextResponse.json({ status: "already_exists" }, { status: 200, headers: corsHeaders });
+    return NextResponse.json(
+      { status: "already_exists" },
+      { status: 200, headers: corsHeaders },
+    );
   }
 
-  await db.collection("emails").insertOne({ projectId, email, createdAt: new Date() });
+  await db
+    .collection("emails")
+    .insertOne({ projectId, email, createdAt: new Date() });
 
-  return NextResponse.json({ status: "success" }, { status: 200, headers: corsHeaders });
+  return NextResponse.json(
+    { status: "success" },
+    { status: 200, headers: corsHeaders },
+  );
 }
